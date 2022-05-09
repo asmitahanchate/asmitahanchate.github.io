@@ -1,3 +1,10 @@
+Necessary Links:
+
+- website (deployed here) : https://asmi06.github.io/
+- repository : https://github.com/Asmi06/Asmi06.github.io
+- video link : https://drive.google.com/file/d/1xAdDbm39bvDMuZJTluOsuylnhXNZ_t8N/view?usp=sharing
+- external data link (if you want to run canvas submission locally) : https://drive.google.com/drive/folders/1W2rNVs1Jr5EkA6pHc1_FyBBiqUBvdRGJ?usp=sharing
+
 Folder Structure :
 
 - We maintain the folder structure consistent with all the work done this semester.
@@ -26,7 +33,7 @@ Optimization:
 Data Folder :
 
 - In the deployed website, the data folder contains all the necessary files.
-- In the files submitted on canvas, the data folder is kept empty, as the data files are too large. We are storing them in this link :
+- In the files submitted on canvas, the data folder is kept empty, as the data files are too large. We are storing them in this link : https://drive.google.com/drive/folders/1W2rNVs1Jr5EkA6pHc1_FyBBiqUBvdRGJ?usp=sharing
 - Copy all the individual files of this link and paste directly inside the empty data folder. All files should be in flat-structure with no subdirectories.
 
 External Libraries :

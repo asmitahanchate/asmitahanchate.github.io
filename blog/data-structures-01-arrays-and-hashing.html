@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arrays &amp; Hashing: making brute force disappear — Asmita Hanchate</title>
+<meta name="description" content="Day 1 of my Data Structures series. How a hash set and a hash map quietly turn O(n²) brute force into O(n) — through Contains Duplicate, Valid Anagram, Group Anagrams, and Two Sum." />
+<meta name="author" content="Asmita Hanchate" />
+<meta name="theme-color" content="#fbf7f0" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23bf4f2e'/%3E%3Ctext x='50' y='70' font-family='Georgia,serif' font-size='62' fill='%23fbf7f0' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Arrays & Hashing: making brute force disappear" />
+<meta property="og:description" content="Day 1 of my Data Structures series — how a hash table turns O(n²) into O(n)." />
+<meta property="og:url" content="https://asmitahanchate.github.io/blog/data-structures-01-arrays-and-hashing.html" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Arrays & Hashing: making brute force disappear" />
+<meta name="twitter:description" content="Day 1 of my Data Structures series — how a hash table turns O(n²) into O(n)." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="blog.css" />
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="../" class="name">Asmita Hanchate</a>
+    <div class="links">
+      <a href="../#work">Work</a>
+      <a href="../#projects">Projects</a>
+      <a href="./" class="here">Writing</a>
+      <a href="../resume.pdf" target="_blank">Résumé</a>
+    </div>
+  </div>
+</nav>
+
+<div class="post wrap">
+
+  <header class="posthead">
+    <div class="crumb"><a href="./">Writing</a> &nbsp;/&nbsp; Data Structures</div>
+    <div class="kicker">Data Structures · Day 01</div>
+    <h1>Arrays &amp; Hashing: making <em>brute force</em> disappear</h1>
+    <div class="dek">Half of the "easy" problems I re-solved this week came down to one move — stop re-checking the array, and start remembering what you've already seen.</div>
+    <div class="byline">
+      <b>Asmita Hanchate</b><span class="sep">·</span>
+      <span>Nov 17, 2026</span><span class="sep">·</span>
+      <span>6 min read</span><span class="sep">·</span>
+      <span>Arrays &amp; Hashing</span>
+    </div>
+  </header>
+
+  <article>
+    <p class="lede">I'm re-walking the <a class="link" href="https://github.com/asmitahanchate/neetcode150" target="_blank" rel="noopener">NeetCode 150</a> for interview practice, and I decided to write as I go — because I only really trust that I understand something once I can explain it without the solution open in another tab. This is day one. The whole category is called <em>Arrays &amp; Hashing</em>, and after four problems the thing they share is almost embarrassingly simple.</p>
+
+    <p>Brute force, on an array, nearly always means the same thing: compare everything against everything else. Two nested loops, O(n²). It works, it passes the small test cases, and it falls over the moment the input gets real.</p>
+
+    <p>The hash table is the tool that makes that second loop disappear. A <code>set</code> or a <code>dict</code> gives you O(1) membership and lookup, so instead of asking <em>"is this value somewhere else in the array?"</em> and scanning to find out, you ask <em>"have I already seen this?"</em> — and you've kept a note that answers instantly. You trade a little memory for a lot of time. That's the whole pattern. Here's how it shows up, getting slightly cleverer each time.</p>
+
+    <h2><span class="pn">01</span>Contains Duplicate</h2>
+    <p class="lc">LeetCode 217 · the pattern in its purest form</p>
+    <p>Does any value appear twice? The brute-force instinct is to compare every pair. But a set only keeps <em>unique</em> values — so if turning the list into a set makes it shorter, something collapsed, which means something repeated.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">hasDuplicate</span>(self, nums: List[<span class="f">int</span>]) <span class="k">-></span> <span class="f">bool</span>:
+        <span class="k">return</span> <span class="f">len</span>(nums) != <span class="f">len</span>(<span class="f">set</span>(nums))</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(n)</span></div>
+    <p>One line, and the nested loop is gone. The set does the remembering for me.</p>
+
+    <h2><span class="pn">02</span>Valid Anagram</h2>
+    <p class="lc">LeetCode 242 · from membership to counting</p>
+    <p>Two strings are anagrams when every character shows up the same number of times in both. So I don't need to sort or compare positions — I just need two tallies. Python's <code>Counter</code> is a dict that counts for you, and two Counters are equal only when every key and count matches.</p>
+<pre><code><span class="k">from</span> collections <span class="k">import</span> Counter
+
+<span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">isAnagram</span>(self, s: <span class="f">str</span>, t: <span class="f">str</span>) <span class="k">-></span> <span class="f">bool</span>:
+        <span class="k">return</span> Counter(s) == Counter(t)</code></pre>
+    <div class="cx"><span>Time O(n + m)</span><span>Space O(k) distinct chars</span></div>
+    <p>The jump from problem 1 to problem 2 is small but worth naming: a set remembers <em>whether</em> it saw something; a dict remembers <em>how much</em>. Once you can store a value per key, counting is free.</p>
+
+    <h2><span class="pn">03</span>Group Anagrams</h2>
+    <p class="lc">LeetCode 49 · the key doesn't have to be the thing itself</p>
+    <p>This is where it got interesting for me. Group all the words that are anagrams of each other. The unlock: every anagram, when you sort its letters, produces the <em>same</em> string. So <code>"eat"</code>, <code>"tea"</code>, and <code>"ate"</code> all become <code>"aet"</code>. Use that sorted string as a dictionary key, and each word drops itself into the right bucket on the way past.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">groupAnagrams</span>(self, strs: List[<span class="f">str</span>]) <span class="k">-></span> List[List[<span class="f">str</span>]]:
+        master = {}
+        <span class="k">for</span> s <span class="k">in</span> strs:
+            key = <span class="s">''</span>.join(<span class="f">sorted</span>(s))   <span class="c"># anagrams share a sorted key</span>
+            <span class="k">if</span> key <span class="k">not in</span> master:
+                master[key] = []
+            master[key].append(s)
+        <span class="k">return</span> <span class="f">list</span>(master.values())</code></pre>
+    <div class="cx"><span>Time O(n · k log k)</span><span>Space O(n · k)</span></div>
+    <p>The lesson that carried forward: <strong>a hash key can be something you compute, not just the raw value.</strong> The moment you can turn "these things are related" into "these things produce the same key," grouping becomes a single pass.</p>
+
+    <h2><span class="pn">04</span>Two Sum</h2>
+    <p class="lc">LeetCode 1 · remember as you go</p>
+    <p>The classic. Find two numbers that add to <code>target</code> and return their indices. Brute force checks every pair — O(n²) again. The hash-map version flips the question around: as I walk the array, for each number I ask whether the <em>complement</em> (<code>target - num</code>) is something I've already passed. If it is, I'm done. If not, I jot down where this number lives and keep going.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">twoSum</span>(self, nums: List[<span class="f">int</span>], target: <span class="f">int</span>) <span class="k">-></span> List[<span class="f">int</span>]:
+        seen = {}                          <span class="c"># value -> index</span>
+        <span class="k">for</span> idx, num <span class="k">in</span> <span class="f">enumerate</span>(nums):
+            <span class="k">if</span> target - num <span class="k">in</span> seen:        <span class="c"># have I already passed its partner?</span>
+                <span class="k">return</span> [seen[target - num], idx]
+            seen[num] = idx                <span class="c"># no — remember this one for later</span></code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(n)</span></div>
+    <p>What I like about Two Sum is that the map isn't a lookup table I build first and query second — I build and query it in the same pass. Each number only ever needs to look <em>backward</em> at what came before, and the dict makes "look backward" cost nothing.</p>
+
+    <div class="callout">
+      <div class="t">The pattern, in one sentence</div>
+      <p>When a brute-force solution is "for each element, scan the rest of the array," reach for a hash table and ask instead: <strong>what would I need to have remembered for this element's answer to be a single lookup?</strong> Membership → a set. Counts → a dict. Grouping → a dict keyed by something you compute. Pairing → a dict you fill as you walk.</p>
+    </div>
+
+    <h2>Why I'm writing these down</h2>
+    <p>I've solved most of these before. Re-solving them isn't the point — noticing the <em>shared shape</em> is. Four different problems, one move: stop re-reading the array, start remembering it. That reframing is what actually transfers to the next unfamiliar problem, and to real systems, where "don't recompute what you can cache" is the same idea wearing a bigger coat.</p>
+    <p><strong>Next up (Day 2):</strong> the sliding window — what to do when the answer lives in a <em>contiguous stretch</em> of the array, and how two pointers let you keep an O(n) running view instead of re-summing every window from scratch.</p>
+  </article>
+
+  <div class="pfoot">
+    <a href="./">← All Data Structures posts</a>
+    <a href="https://github.com/asmitahanchate/neetcode150" target="_blank" rel="noopener">See the code on GitHub ↗</a>
+  </div>
+
+</div>
+
+<footer>
+  <div class="f-in wrap">
+    <div class="links">
+      <a href="../">Home</a>
+      <a href="mailto:asmita.hanchate0604@gmail.com">Email</a>
+      <a href="https://linkedin.com/in/asmitahanchate" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/asmitahanchate" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="fine">© 2026 Asmita Hanchate · Data Structures, day by day.</div>
+  </div>
+</footer>
+
+<script>
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

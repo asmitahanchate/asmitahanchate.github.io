@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Two Pointers: a reason to move · Asmita Hanchate</title>
+<meta name="description" content="Day 2 of my Data Structures series. Two pointers converging from the ends of an array, and the one skill that makes the pattern work: proving which pointer to move. Valid Palindrome, Two Sum II, Container With Most Water." />
+<meta name="author" content="Asmita Hanchate" />
+<meta name="theme-color" content="#fbf7f0" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23bf4f2e'/%3E%3Ctext x='50' y='70' font-family='Georgia,serif' font-size='62' fill='%23fbf7f0' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Two Pointers: a reason to move" />
+<meta property="og:description" content="Day 2 of my Data Structures series: two pointers, and the skill of proving which one to move." />
+<meta property="og:url" content="https://asmitahanchate.github.io/blog/data-structures-02-two-pointers.html" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Two Pointers: a reason to move" />
+<meta name="twitter:description" content="Day 2 of my Data Structures series: two pointers, and the skill of proving which one to move." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="blog.css" />
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="../" class="name">Asmita Hanchate</a>
+    <div class="links">
+      <a href="../#work">Work</a>
+      <a href="../#projects">Projects</a>
+      <a href="./" class="here">Writing</a>
+      <a href="../resume.pdf" target="_blank">Résumé</a>
+    </div>
+  </div>
+</nav>
+
+<div class="post wrap">
+
+  <header class="posthead">
+    <div class="crumb"><a href="./">Writing</a> &nbsp;/&nbsp; Data Structures</div>
+    <div class="kicker">Data Structures · Day 02</div>
+    <h1>Two Pointers: <em>a reason to move</em></h1>
+    <div class="byline">
+      <b>Asmita Hanchate</b><span class="sep">·</span>
+      <span>Nov 18, 2026</span><span class="sep">·</span>
+      <span>6 min read</span><span class="sep">·</span>
+      <span>Two Pointers</span>
+    </div>
+  </header>
+
+  <article>
+    <p class="lede">Day 1 was about buying speed with memory: a hash table remembers what you've already seen, so you never have to scan the array twice. Today is almost the opposite move. When the array already has some structure, when it's sorted, or symmetric, you often don't need extra memory at all. You just need two pointers and a reason to move them.</p>
+
+    <p>The brute-force shape is the same nested loop as yesterday: check every pair. Two pointers kill the inner loop a different way. You put one index at each end of the array and walk them toward each other. The whole game is this: at every step, you have to be able to <strong>prove which pointer to move</strong>, and prove that moving it can't step over the answer. If you can't justify the move, the technique doesn't apply.</p>
+
+    <h2><span class="pn">01</span>Valid Palindrome</h2>
+    <p class="lc">LeetCode 125 · the shape in its simplest form</p>
+    <p>A palindrome reads the same forwards and backwards, ignoring case and punctuation. There are two honest ways to check it, and comparing them is the whole point.</p>
+    <p>The first is the one you'd write without thinking: strip the string down to lowercase alphanumerics, then compare it to its own reverse.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">isPalindrome</span>(self, s: <span class="f">str</span>) <span class="k">-></span> <span class="f">bool</span>:
+        cleaned = [c.lower() <span class="k">for</span> c <span class="k">in</span> s <span class="k">if</span> c.isalnum()]
+        <span class="k">return</span> cleaned == cleaned[::-1]</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(n)</span></div>
+    <p>Clean and readable, but it builds a second reversed copy, so it costs O(n) extra space. The two-pointer version spends nothing: put one index at each end and march them inward, comparing as you go, and bail the instant they disagree.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">isPalindrome</span>(self, s: <span class="f">str</span>) <span class="k">-></span> <span class="f">bool</span>:
+        cleaned = [c.lower() <span class="k">for</span> c <span class="k">in</span> s <span class="k">if</span> c.isalnum()]
+        left, right = 0, <span class="f">len</span>(cleaned) - 1
+        <span class="k">while</span> left &lt; right:
+            <span class="k">if</span> cleaned[left] != cleaned[right]:
+                <span class="k">return</span> <span class="k">False</span>
+            left += 1
+            right -= 1
+        <span class="k">return</span> <span class="k">True</span></code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(n) cleaned · O(1) if you skip in place</span></div>
+    <p>This is the version worth internalizing, because the shape (two indices marching toward the middle) <em>is</em> the pattern. And if you skip the non-alphanumeric characters directly on the original string instead of pre-cleaning it, the extra copy disappears and it's genuinely O(1) space.</p>
+
+    <h2><span class="pn">02</span>Two Sum II</h2>
+    <p class="lc">LeetCode 167 · when the input is sorted, remembering is wasteful</p>
+    <p>Here's a nice callback. Yesterday's Two Sum used a hash map because the array was unsorted, so I had to remember every number I'd passed. This version hands me a <em>sorted</em> array, and that one word changes the whole tool.</p>
+    <p>Put <code>left</code> at the smallest number and <code>right</code> at the largest, and look at their sum. If it's exactly the target, done. If it's too big, the only way to get smaller is to pull <code>right</code> down. If it's too small, push <code>left</code> up. No map, no second copy.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">twoSum</span>(self, numbers: List[<span class="f">int</span>], target: <span class="f">int</span>) <span class="k">-></span> List[<span class="f">int</span>]:
+        left, right = 0, <span class="f">len</span>(numbers) - 1
+        <span class="k">while</span> left &lt; right:
+            total = numbers[left] + numbers[right]
+            <span class="k">if</span> total == target:
+                <span class="k">return</span> [left + 1, right + 1]     <span class="c"># the answer is 1-indexed</span>
+            <span class="k">elif</span> total > target:
+                right -= 1
+            <span class="k">else</span>:
+                left += 1</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span></div>
+    <p>The sorted order is exactly what makes each move provable. When the sum is too big, <em>every</em> pair that keeps the current <code>right</code> with an even larger <code>left</code> is also too big, so I can drop <code>right</code> entirely and never look back. Same problem as yesterday, different structure in the input, a completely different tool. That contrast is the thing I actually want to remember.</p>
+
+    <h2><span class="pn">03</span>Container With Most Water</h2>
+    <p class="lc">LeetCode 11 · the move that looks greedy but is provably safe</p>
+    <p>Each number is the height of a vertical wall. Pick two walls; the water they hold is the <em>width</em> between them times the <em>shorter</em> of the two heights. Find the pair that holds the most.</p>
+    <p>Start as wide as possible, a pointer at each end. Then the one move that makes this whole problem collapse: <strong>always advance the pointer at the shorter wall.</strong></p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">maxArea</span>(self, heights: List[<span class="f">int</span>]) <span class="k">-></span> <span class="f">int</span>:
+        left, right = 0, <span class="f">len</span>(heights) - 1
+        best = 0
+        <span class="k">while</span> left &lt; right:
+            area = (right - left) * <span class="f">min</span>(heights[left], heights[right])
+            best = <span class="f">max</span>(best, area)
+            <span class="k">if</span> heights[left] &lt; heights[right]:
+                left += 1
+            <span class="k">else</span>:
+                right -= 1
+        <span class="k">return</span> best</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span></div>
+    <p>Why is it safe to walk away from the shorter wall? The area is capped by that shorter wall. If I instead moved the <em>taller</em> wall inward, the width shrinks and the height is still capped by the same short wall, so the area can only stay equal or get worse. Moving the shorter wall is the only move that could ever find something better, so that's the move I make. Every pair I skip is a pair I've just proven can't beat what I already have.</p>
+
+    <div class="callout">
+      <div class="t">The pattern, in one sentence</div>
+      <p>When the array is sorted or symmetric, replace the nested loop with two pointers converging from the ends, and make every step a small proof: <strong>moving this pointer cannot step over a better answer.</strong> Comparing from both ends wants a palindrome walk. A target sum in sorted data wants converging pointers. Maximizing over a pair wants you to abandon whichever side is holding you back.</p>
+    </div>
+
+    <h2>Why I'm writing this one down</h2>
+    <p>Day 1's skill was noticing <em>when to remember</em>. Day 2's skill is narrower and, honestly, a little harder: justifying the move. The code for all three of these is tiny. The entire difficulty lives in one sentence, "which pointer do I move, and how do I know I'm not skipping a better pair?" Once I can say that sentence out loud for a problem, the code more or less writes itself.</p>
+    <p><strong>Next up (Day 3):</strong> the sliding window, where the two pointers stop converging and start moving the <em>same</em> direction, and the stretch of array between them carries the answer.</p>
+  </article>
+
+  <div class="pfoot">
+    <a href="./">← All Data Structures posts</a>
+    <a href="https://github.com/asmitahanchate/neetcode150" target="_blank" rel="noopener">See the code on GitHub ↗</a>
+  </div>
+
+</div>
+
+<footer>
+  <div class="f-in wrap">
+    <div class="links">
+      <a href="../">Home</a>
+      <a href="mailto:asmita.hanchate0604@gmail.com">Email</a>
+      <a href="https://linkedin.com/in/asmitahanchate" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/asmitahanchate" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="fine">© 2026 Asmita Hanchate · Data Structures, day by day.</div>
+  </div>
+</footer>
+
+<script>
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

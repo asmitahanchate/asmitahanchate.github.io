@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Sliding Window: one pass, no re-reading · Asmita Hanchate</title>
+<meta name="description" content="Day 3 of my Data Structures series. Two pointers that move the same direction, and the stretch of array between them that carries the answer. Fixed and variable windows, through LeetCode 1343, 209, 3, and 424, plus the one I haven't finished yet." />
+<meta name="author" content="Asmita Hanchate" />
+<meta name="theme-color" content="#fbf7f0" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23bf4f2e'/%3E%3Ctext x='50' y='70' font-family='Georgia,serif' font-size='62' fill='%23fbf7f0' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="The Sliding Window: one pass, no re-reading" />
+<meta property="og:description" content="Day 3 of my Data Structures series: two pointers moving the same direction, and the window between them that keeps an O(n) running view." />
+<meta property="og:url" content="https://asmitahanchate.github.io/blog/data-structures-03-sliding-window.html" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="The Sliding Window: one pass, no re-reading" />
+<meta name="twitter:description" content="Day 3 of my Data Structures series: two pointers moving the same direction, and the window between them that keeps an O(n) running view." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="blog.css" />
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="../" class="name">Asmita Hanchate</a>
+    <div class="links">
+      <a href="../#work">Work</a>
+      <a href="../#projects">Projects</a>
+      <a href="./" class="here">Writing</a>
+      <a href="../resume.pdf" target="_blank">Résumé</a>
+    </div>
+  </div>
+</nav>
+
+<div class="post wrap">
+
+  <header class="posthead">
+    <div class="crumb"><a href="./">Writing</a> &nbsp;/&nbsp; Data Structures</div>
+    <div class="kicker">Data Structures · Day 03</div>
+    <h1>The Sliding Window: <em>one pass, no re-reading</em></h1>
+    <div class="byline">
+      <b>Asmita Hanchate</b><span class="sep">·</span>
+      <span>Nov 19, 2026</span><span class="sep">·</span>
+      <span>7 min read</span><span class="sep">·</span>
+      <span>Sliding Window</span>
+    </div>
+  </header>
+
+  <article>
+    <p class="lede">Day 1 was about remembering the array with a hash table. Day 2 was about walking it from both ends with two pointers converging inward. Day 3 keeps the two pointers but changes their choreography: now they move the <em>same</em> direction, and the stretch of array sitting between them, the window, is what holds the answer. The whole trick is that the left pointer never walks backwards, so even though there are two loops on the page, each element is touched a constant number of times and the work stays O(n).</p>
+
+    <p>Here's the shape I kept seeing. A brute-force answer to "find the best contiguous run" re-examines every run from scratch: start here, scan forward, add it all up, start one over, scan again. That's O(n²), and most of it is re-adding numbers I already added a step ago. A window fixes that by keeping a running view. When the window moves, I don't rebuild it. I just account for the one element that <strong>entered</strong> on the right and the one that <strong>left</strong> on the left.</p>
+
+    <p>There are two flavors, and telling them apart is most of the battle:</p>
+    <ul>
+      <li><strong>Fixed window:</strong> the size is locked at some <code>k</code>. Every step, one element enters and one leaves, so the window slides without ever changing length.</li>
+      <li><strong>Variable window:</strong> the size breathes. The right pointer grows the window; a condition decides when the left pointer shrinks it. You're hunting for the longest or shortest window that still satisfies something.</li>
+    </ul>
+
+    <h2><span class="pn">01</span>Number of Subarrays, average ≥ threshold</h2>
+    <p class="lc">LeetCode 1343 · the fixed window, and why you never re-sum</p>
+    <p>Count the length-<code>k</code> subarrays whose average is at least <code>threshold</code>. (This one and the unfinished problem below live in the <a class="link" href="https://github.com/asmitahanchate/neetcode150/tree/main/Sliding%20window%20fixed%20size" target="_blank" rel="noopener">fixed-size folder</a>.) The naive version sums every window independently, which is O(n · k). But neighbouring windows overlap in all but two elements, so re-summing throws away almost everything you just computed. Instead, carry a running <code>currSum</code>: add the number entering on the right, check the window, then subtract the number leaving on the left.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">numOfSubarrays</span>(self, arr: List[<span class="f">int</span>], k: <span class="f">int</span>, threshold: <span class="f">int</span>) <span class="k">-></span> <span class="f">int</span>:
+        result = <span class="n">0</span>
+        currSum = <span class="f">sum</span>(arr[:k-<span class="n">1</span>])          <span class="c"># pre-load the first k-1 elements</span>
+        <span class="k">for</span> left <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(arr) - k + <span class="n">1</span>):
+            currSum += arr[left + k - <span class="n">1</span>]     <span class="c"># the newcomer on the right: now exactly k</span>
+            <span class="k">if</span> (currSum / k) >= threshold:
+                result += <span class="n">1</span>
+            currSum -= arr[left]           <span class="c"># drop the leaver: back to k-1 for next step</span>
+        <span class="k">return</span> result</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span></div>
+    <p>This is Day 1's lesson in disguise: <em>don't recompute what you can carry forward.</em> The window is a tiny cache of one number, and sliding it costs one addition and one subtraction no matter how big <code>k</code> is. (Small aside I liked: comparing <code>currSum >= k * threshold</code> instead of dividing avoids floating-point entirely and says the exact same thing.)</p>
+
+    <h2><span class="pn">02</span>Minimum Size Subarray Sum</h2>
+    <p class="lc">LeetCode 209 · the variable window in its clearest form</p>
+    <p>Find the shortest contiguous subarray whose sum is at least <code>target</code>. Now the window can't be a fixed size, because I don't know how long "shortest" is until I find it. So the window breathes: the <code>for</code> loop grows it to the right, and the <code>while</code> loop shrinks it from the left the moment it's valid, trying to make it smaller while it still clears the target.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">minSubArrayLen</span>(self, target: <span class="f">int</span>, nums: List[<span class="f">int</span>]) <span class="k">-></span> <span class="f">int</span>:
+        length = <span class="f">float</span>(<span class="s">"inf"</span>)
+        left, total = <span class="n">0</span>, <span class="n">0</span>
+        <span class="k">for</span> right <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(nums)):
+            total += nums[right]               <span class="c"># grow on the right</span>
+            <span class="k">while</span> total >= target:              <span class="c"># valid? try to shrink</span>
+                length = <span class="f">min</span>(right - left + <span class="n">1</span>, length)
+                total -= nums[left]
+                left += <span class="n">1</span>
+        <span class="k">return</span> <span class="n">0</span> <span class="k">if</span> length == <span class="f">float</span>(<span class="s">"inf"</span>) <span class="k">else</span> length</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span></div>
+    <p>The <code>while</code> loop is what scared me at first, because a loop inside a loop looks like O(n²). It isn't. The left pointer only ever moves forward, and it can't pass the right pointer, so across the whole run it advances at most n times total. Each index enters the window once and leaves once. That "enters once, leaves once" accounting is the thing to hold onto; it's what makes every honest sliding window O(n) even with a nested loop on screen.</p>
+
+    <h2><span class="pn">03</span>Longest Substring Without Repeating Characters</h2>
+    <p class="lc">LeetCode 3 · a window made of a set</p>
+    <p>Find the longest substring with no repeated character. The window here isn't a sum, it's a <code>set</code> of the characters currently inside it, which is Day 1 showing up again. Before I let a new character in on the right, I shrink from the left until the duplicate is gone, so the window always holds unique characters by construction.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">lengthOfLongestSubstring</span>(self, s: <span class="f">str</span>) <span class="k">-></span> <span class="f">int</span>:
+        window = <span class="f">set</span>()
+        left, length = <span class="n">0</span>, <span class="n">0</span>
+        <span class="k">for</span> right <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(s)):
+            <span class="k">while</span> s[right] <span class="k">in</span> window:         <span class="c"># shrink until the clash is gone</span>
+                window.remove(s[left])
+                left += <span class="n">1</span>
+            window.add(s[right])
+            length = <span class="f">max</span>(length, right - left + <span class="n">1</span>)
+        <span class="k">return</span> length</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(min(n, m)) · m = charset size</span></div>
+    <p>Same O(n) reasoning as problem 2: each character gets added to the set once and removed once, so the inner <code>while</code> does O(n) work in total, not per step. What changed is only <em>what the window keeps track of.</em> A sum answers "how much"; a set answers "what's in here right now." The window is just a container, and you pick the container that makes the question cheap.</p>
+
+    <h2><span class="pn">04</span>Longest Repeating Character Replacement</h2>
+    <p class="lc">LeetCode 424 · the window that slides but never shrinks</p>
+    <p>You may replace up to <code>k</code> characters; find the longest substring you can make all one letter. The count of characters you'd have to replace is <code>window length − (count of the most frequent letter)</code>. If that exceeds <code>k</code>, the window is invalid. The subtle part, and the one that took me a second: this uses an <code>if</code>, not a <code>while</code>.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">characterReplacement</span>(self, s: <span class="f">str</span>, k: <span class="f">int</span>) <span class="k">-></span> <span class="f">int</span>:
+        count = {}
+        result, left = <span class="n">0</span>, <span class="n">0</span>
+        <span class="k">for</span> right <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(s)):
+            count[s[right]] = <span class="n">1</span> + count.get(s[right], <span class="n">0</span>)
+            <span class="k">if</span> (right - left + <span class="n">1</span>) - <span class="f">max</span>(count.values()) > k:
+                count[s[left]] -= <span class="n">1</span>
+                left += <span class="n">1</span>
+            result = <span class="f">max</span>(result, right - left + <span class="n">1</span>)
+        <span class="k">return</span> result</code></pre>
+    <div class="cx"><span>Time O(26 · n) = O(n)</span><span>Space O(1) · at most 26 keys</span></div>
+    <p>Why <code>if</code> and not <code>while</code>? Because I never need a window <em>shorter</em> than the best I've already found. If the current window goes invalid, I slide it forward by one, keeping the same length, and carry on. It can only ever grow past the record, never shrink below it, so the answer is just the largest length the window ever reached. That's a different mental model from problem 2, where shrinking was the whole point, and noticing the difference is what made the pattern click for me rather than feeling like four unrelated tricks.</p>
+
+    <div class="callout">
+      <div class="t">The pattern, in one sentence</div>
+      <p>When the answer is a contiguous run and brute force keeps re-scanning overlapping pieces, slide a window instead: move the right pointer to grow it, account only for what enters and leaves, and let the question decide the left pointer. <strong>Fixed size</strong> when the length is given; <strong>variable size</strong> when you're hunting for the longest or shortest valid run. Each index enters and leaves once, so it's one pass.</p>
+    </div>
+
+    <h2>The one I haven't finished yet</h2>
+    <p>I want this series to be honest about where I'm still stuck, so: <strong>Sliding Subarray Beauty</strong> (LeetCode 2653). My first instinct was to keep the window in a list, sort it every step, and read the x-th smallest value. It's correct, and it passes 708 of 717 test cases before timing out.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">getSubarrayBeauty</span>(self, nums: List[<span class="f">int</span>], k: <span class="f">int</span>, x: <span class="f">int</span>) <span class="k">-></span> List[<span class="f">int</span>]:
+        currList, result = [], []
+        left = <span class="n">0</span>
+        <span class="k">for</span> right <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(nums)):
+            currList.append(nums[right])
+            currList.sort()                      <span class="c"># this is the O(k log k) tax, every step</span>
+            <span class="k">if</span> (right - left + <span class="n">1</span>) == k:
+                result.append(currList[x-<span class="n">1</span>] <span class="k">if</span> currList[x-<span class="n">1</span>] &lt; <span class="n">0</span> <span class="k">else</span> <span class="n">0</span>)
+                currList.remove(nums[left])
+                left += <span class="n">1</span>
+        <span class="k">return</span> result</code></pre>
+    <div class="cx"><span>Time O(n · k log k)</span><span>Space O(k) · too slow</span></div>
+    <p>The bug isn't correctness, it's that I broke the whole point of a window. Re-sorting every step is exactly the "re-read what I already knew" habit the pattern exists to kill. The fix I've written myself a note about: the values are tiny, only −50 to 50, so instead of sorting I can keep a <em>tally</em>, a count of how many times each value is in the window. To find the x-th smallest I count up from −50 until I've passed x numbers. That's a fixed 101-bucket scan per step, O(n) overall. I'll come back and write the counting version properly before I call this one done.</p>
+
+    <h2>Why I'm writing this one down</h2>
+    <p>Three days in, the throughline is clearer than any single trick. Day 1: stop re-reading the array, remember it. Day 2: stop checking every pair, walk from both ends with a reason. Day 3: stop rebuilding every window, carry one forward and only touch what changes. They're the same instinct wearing different clothes, which is "don't redo work you've already done." The sliding window just makes that instinct physical: there's a literal left edge that is never, ever allowed to walk backwards.</p>
+    <p><strong>Next up (Day 4):</strong> stacks, where instead of a window gliding across the array you keep a little pile of things you've seen but haven't resolved yet, and the most recent one is always the first you deal with.</p>
+  </article>
+
+  <div class="pfoot">
+    <a href="./">← All Data Structures posts</a>
+    <a href="https://github.com/asmitahanchate/neetcode150/tree/main/Sliding%20window%20variable%20size" target="_blank" rel="noopener">See the code on GitHub ↗</a>
+  </div>
+
+</div>
+
+<footer>
+  <div class="f-in wrap">
+    <div class="links">
+      <a href="../">Home</a>
+      <a href="mailto:asmita.hanchate0604@gmail.com">Email</a>
+      <a href="https://linkedin.com/in/asmitahanchate" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/asmitahanchate" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="fine">© 2026 Asmita Hanchate · Data Structures, day by day.</div>
+  </div>
+</footer>
+
+<script>
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

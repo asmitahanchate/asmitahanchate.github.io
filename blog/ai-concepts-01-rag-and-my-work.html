@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>What RAG is, and where I'd already built it · Asmita Hanchate</title>
-<meta name="description" content="No. 1 of my AI Concepts series. Retrieval-augmented generation in plain words, three times I'd already shipped it at work (BILL, Nutanix, Camping World), and a chunking lab on the FastAPI docs scored on recall and context size." />
+<title>What I learned about RAG, and how it connects to my work · Asmita Hanchate</title>
+<meta name="description" content="No. 1 of my AI Concepts series. Retrieval-augmented generation in plain words, how it shows up across my applied-AI work (BILL, Nutanix, Camping World, S&P Global, EvalFrame), and a chunking lab on the FastAPI docs scored on recall and context size." />
 <meta name="author" content="Asmita Hanchate" />
 <meta name="theme-color" content="#fbf7f0" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23bf4f2e'/%3E%3Ctext x='50' y='70' font-family='Georgia,serif' font-size='62' fill='%23fbf7f0' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
 <meta property="og:type" content="article" />
-<meta property="og:title" content="What RAG is, and where I'd already built it" />
-<meta property="og:description" content="No. 1 of my AI Concepts series: RAG in plain words, three times I'd shipped it at work, and a chunking lab with real numbers." />
+<meta property="og:title" content="What I learned about RAG, and how it connects to my work" />
+<meta property="og:description" content="No. 1 of my AI Concepts series: RAG in plain words, how it shows up across my applied-AI work, and a chunking lab with real numbers." />
 <meta property="og:url" content="https://asmitahanchate.github.io/blog/ai-concepts-01-rag-and-my-work.html" />
 <meta name="twitter:card" content="summary" />
-<meta name="twitter:title" content="What RAG is, and where I'd already built it" />
-<meta name="twitter:description" content="No. 1 of my AI Concepts series: RAG in plain words, three times I'd shipped it at work, and a chunking lab with real numbers." />
+<meta name="twitter:title" content="What I learned about RAG, and how it connects to my work" />
+<meta name="twitter:description" content="No. 1 of my AI Concepts series: RAG in plain words, how it shows up across my applied-AI work, and a chunking lab with real numbers." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -39,7 +39,7 @@
   <header class="posthead">
     <div class="crumb"><a href="./">Writing</a> &nbsp;/&nbsp; AI Concepts</div>
     <div class="kicker">AI Concepts · No. 01</div>
-    <h1>What RAG is, and <em>where I'd already built it</em></h1>
+    <h1>What I learned about RAG, <em>and how it connects to my work</em></h1>
     <div class="byline">
       <b>Asmita Hanchate</b><span class="sep">·</span>
       <span>Nov 20, 2026</span><span class="sep">·</span>
@@ -49,7 +49,8 @@
   </header>
 
   <article>
-    <p class="lede">I learned something properly today, and I want to write it down while it's fresh. Twice this year an agent I worked on gave answers that sounded confident but weren't true. In both cases the model itself was fine. The problem was simpler: the model never saw the right information. So today I took a step back, went over the basics the right way, and then built a small project to test what I learned. Here's what I found.</p>
+    <p class="lede">I learned something new today, and I want to write it down while it's fresh. I'm an Applied AI Engineer at DevRev, working with S&amp;P Global, Nutanix, Camping World and BILL. My work covers the whole path from data to answer: ingestion pipelines, retrieval and search, the agents on top, and the evaluation that tells us whether they work in production.</p>
+    <p>Again and again, I've seen the same lesson: when an AI system gives a wrong answer, the model is often fine. <strong>The system never gave it the right information.</strong> So today I went back over the fundamentals of retrieval properly, and built a small project to test them with real numbers. Here's what I found, and how it connects to my work.</p>
 
     <h2>The basics, in plain words</h2>
     <p>Language models have three recurring problems:</p>
@@ -58,45 +59,53 @@
       <li><strong>They can only read so much at once.</strong> That limit is the context window.</li>
       <li><strong>They don't know your private data.</strong> They only know what they were trained on.</li>
     </ul>
-    <p><strong>RAG (Retrieval-Augmented Generation)</strong> helps with all three, and the idea is almost suspiciously simple: find the right information first, put it in front of the model, then ask the question. The model doesn't change. You're handing it an open book.</p>
-    <p>When the "book" is too big to hand over whole, you need a few more pieces:</p>
+    <p><strong>RAG (Retrieval-Augmented Generation)</strong> helps with all three, and the idea is simple: find the right information first, put it in front of the model, then ask the question. The model stays the same. You're handing it an open book.</p>
+    <p>When the "book" is too big, you need a few more pieces:</p>
     <ul>
       <li><strong>Chunking:</strong> cut the documents into smaller pieces.</li>
-      <li><strong>Embeddings:</strong> turn each piece into a list of numbers that captures its meaning, so pieces that mean similar things land close together.</li>
-      <li><strong>A vector database:</strong> stores those numbers so you can quickly find the pieces nearest a question.</li>
-      <li><strong>Keyword search:</strong> meaning-based search can miss exact tokens like IDs, error codes, or field names. Keyword search (BM25) catches them. Running both together is <strong>hybrid search</strong>.</li>
+      <li><strong>Embeddings:</strong> turn each piece into a list of numbers that represents its meaning, so pieces with similar meaning end up close together.</li>
+      <li><strong>A vector database:</strong> stores those numbers so you can quickly find the pieces closest to a question.</li>
+      <li><strong>Keyword search:</strong> meaning-based search can miss exact words like IDs, error codes or field names. Keyword search (BM25) finds them. Using both together is <strong>hybrid search</strong>.</li>
     </ul>
 
-    <h2>Where I'd already seen this at work</h2>
-    <p>The strange part of today was recognising the textbook. Three agents I'd worked on were already doing pieces of this, I just didn't have the vocabulary for it at the time.</p>
+    <h2>Where these ideas show up in my work</h2>
+    <p>The part that struck me today was recognising the textbook. Across the agents I've shipped, these ideas were already load-bearing, I just didn't always have the vocabulary for them at the time.</p>
 
-    <h3>BILL: a developer chatbot that invented API fields</h3>
-    <p>BILL's developer chatbot answered API questions, but it sometimes <strong>made up fields</strong> that didn't exist, or gave endpoint examples that didn't match the real API.</p>
+    <h3><span class="pn">01</span>BILL</h3>
+    <p>I built a Retrieval-Augmented Generation pipeline for BILL (NYSE-listed fintech) over an 800K-character OpenAPI spec using two-stage retrieval and LLM-free indexing, cutting hallucinations from ~30–40% to under 2% and context tokens by ~70% at sub-second latency.</p>
     <ul>
-      <li>BILL's API specification is about <strong>800,000 characters</strong>, far too big to hand the model all at once.</li>
-      <li>The plan was to split the spec <strong>one piece per API operation</strong>. That is chunking along the document's own structure.</li>
-      <li>The agent then worked in two steps. <strong>Discover:</strong> find the operation that matches the developer's question. <strong>Verify:</strong> look up that operation's exact definition (parameters, request body, responses) before answering.</li>
-      <li>The rule: no technical detail without a successful lookup, and if the docs and the spec disagree, <strong>the spec wins</strong>. Later I fixed wrong documentation links by rebuilding each link from the endpoint details.</li>
+      <li><strong>Two-stage retrieval:</strong> <code>/discover</code> ranks API operations for a natural-language question, and <code>/get_endpoint_details</code> returns one operation's full schema. The assistant verifies against the schema before answering.</li>
+      <li><strong>Why LLM-free indexing:</strong> my first attempt enriched 300 endpoints with an LLM (10 workers) and hit rate-limit backoffs of up to 293 seconds against a 120-second runtime limit. Indexing by API operation, without an LLM, was faster and reliable.</li>
+      <li><strong>Connection to today:</strong> this is chunking by the document's own structure, one operation per piece.</li>
     </ul>
+
+    <h3><span class="pn">02</span>Nutanix</h3>
+    <p>I architected memory-based infrastructure for agents at Nutanix with Bring-Your-Own-Agent / Knowledge-Base support, letting users connect any system (Jira, Jenkins, AWS, GCP, Azure and more) as agent memory through an event-driven ingestion pipeline that chunks build logs up to 200 MB for hybrid BM25 + vector search.</p>
+    <p>I reduced Nutanix build-failure triage from up to 7 hours to under 30 seconds with ~96% root-cause accuracy across 15–30 failed builds a day via signal-based text-to-SQL retrieval, auto-routing each failure to its owner as a Jira ticket.</p>
+    <ul>
+      <li><strong>Connection to today:</strong> logs are split into ~60 KB segments to stay under a 1 MB indexing limit, and the platform splits each segment again into smaller passages before embedding. That's two-level chunking: big segments for context, small passages for precise matching.</li>
+    </ul>
+
+    <h3><span class="pn">03</span>Camping World</h3>
+    <p>I engineered an enterprise search system for Camping World (~13K employees) unifying Outlook, Teams, Jira, Confluence and Asana behind one AI assistant with permission-scoped retrieval, raising result coverage from ~4.5% to 100% by routing exact lookups to deterministic SQL.</p>
+    <p>I scaled Camping World's data agents with a summary-table caching layer over tens of millions of Snowflake records, replacing ~32 s warehouse scans that timed out agent workflows with pre-aggregated reads.</p>
+    <ul>
+      <li><strong>Connection to today:</strong> ranked search returned the top 10 of 223 chat rooms, and the one a user needed was #143. Search gives you the best matches, not a complete list. For "find all of X," use SQL.</li>
+    </ul>
+
+    <h3><span class="pn">04</span>S&amp;P Global</h3>
+    <p>I designed a unified knowledge layer for S&amp;P Global that syncs data from any source (for example, Azure DevOps) for search and SQL querying, shrinking quarterly program (PI) planning from 1 week to a few hours for RTEs, scrum masters and PMs.</p>
+
+    <h3><span class="pn">05</span>EvalFrame</h3>
+    <p>I co-built EvalFrame, an LLM evaluation framework that auto-generates test suites, replays multi-turn conversations against live agents and scores them with a weighted LLM-as-judge rubric, plus a downvote-to-ticket feedback loop.</p>
+
     <div class="callout">
-      <div class="t">Something that didn't work, and what it taught me</div>
-      <p>I first tried asking an LLM to enrich every endpoint while building the index (about 300 endpoints, 10 workers at once). It hit rate limits, with waits of 39 to 293 seconds, and the job timed out at its 120-second budget. The lesson: be careful about calling an LLM for every item during indexing. If you must, put it behind a queue, retries with backoff, and a time budget.</p>
+      <div class="t">The common thread</div>
+      <p>In every one of these, the hard part wasn't the model. It was getting the <strong>right data, in the right shape, to the right place</strong>, reliably and with the right permissions.</p>
     </div>
 
-    <h3>Nutanix: build logs too big to search</h3>
-    <p>Nutanix's root-cause-analysis agent needed to read build logs attached to support tickets. Some logs were up to <strong>100 MB</strong>, and files over <strong>1 MB</strong> weren't indexed automatically, so the agent couldn't search them at all.</p>
-    <ul>
-      <li>I built a chunker that downloads the log from the ticket and splits it into <strong>~60 KB pieces</strong>, saving each as a searchable article with tags. A 100 MB log became about <strong>1,700 articles</strong>.</li>
-      <li>Creating that many articles meant many API calls, so the bot ran into <strong>rate limits</strong>. A change was proposed to raise its limit from 2,000 to 10,000 requests per minute.</li>
-    </ul>
-    <p><strong>What clicked today:</strong> the platform doesn't turn a 60 KB article into one embedding. It splits each article again into smaller passages before embedding, and shows the full article when one passage matches. So without naming it, I had built <strong>two-level chunking</strong>: my code made the big pieces, the platform made the small ones.</p>
-
-    <h3>Camping World: when search isn't the right tool</h3>
-    <p>For a Camping World agent, a user wanted to find one specific chat. Search returned the <strong>top 10 of 223</strong> chat rooms, but the one they needed ranked <strong>#143</strong>, so it never showed up. I switched that part to a database query (SQL).</p>
-    <p>The lesson is worth stating plainly: search gives you the best matches, not a complete list. For "find all of X," use a query, not retrieval.</p>
-
     <h2>What I built today</h2>
-    <p>I wanted to see these ideas with real numbers rather than vibes, so I built a small project: rebuild each layer of a RAG system, measure it, and review how it would scale.</p>
+    <p>I wanted to see these ideas with real numbers rather than vibes, so I built a small project: rebuild each layer of a RAG system, measure it, and review how it would scale. The code is on <a class="link" href="https://github.com/asmitahanchate/ai_concepts_and_learning" target="_blank" rel="noopener">GitHub</a>.</p>
     <div class="cx"><span>Corpus: FastAPI docs · 114 pages</span><span>Eval: 30 questions</span><span>Scored on: Recall@5 · MRR · context size</span></div>
     <p>Every one of the 30 test questions carries a short "evidence" phrase that must appear in a retrieved result for it to count as found. The scores: <strong>Recall@5</strong> asks whether the answer was in the top 5 results; <strong>MRR</strong> asks how high up it ranked; <strong>context size</strong> is how much text would be sent to the model.</p>
 
@@ -129,31 +138,26 @@
 
     <h2>What the results taught me</h2>
     <ul>
-      <li><strong>Smaller pieces cost far less.</strong> Cutting the pages sent 9 to 18 times less text and still found 63% to 80% of answers. For BILL the full spec was too big to use; for Nutanix the logs couldn't even be indexed. Cutting down wasn't optional, it was the whole game.</li>
-      <li><strong>Cutting along the document's own structure won.</strong> Splitting at section headings, with the heading sitting on top of each piece, beat everything with both kinds of search. Each piece is one complete idea with a name. That is the same move as splitting BILL's spec one operation at a time. My Nutanix chunker split purely by size, so next time I'd split logs at build stages or error blocks, with a label like "build 412 &gt; test stage &gt; error."</li>
-      <li><strong>Meaning search usually beat keyword search,</strong> because people ask questions in different words than the docs use. But keyword search still earns its place for exact values: build numbers, error codes, field names like <code>billCurrency</code>.</li>
-      <li><strong>Neither search was perfect, and they missed different questions.</strong> That is exactly why combining them (hybrid search) works so well in practice, and it's what I'll test next.</li>
-      <li><strong>More pieces means more cost.</strong> The "small pieces" method made 4,584 chunks, about four times more to embed and store. Same thing I saw at Nutanix: more chunks, more API calls, more rate limits.</li>
-      <li><strong>Running a model during indexing is slow.</strong> Cutting by topic change was the slowest method, because it runs the embedding model on every sentence. Same lesson as my BILL indexing attempt.</li>
-      <li><strong>The test set was the most important part.</strong> Without the 30 questions I'd only be guessing which method was better. For BILL I'd asked for a bug bash and example questions with expected answers; for Nutanix I reported roughly 96% accuracy, and now I know how I'd measure a number like that more carefully: a known failure, the exact error line I expect to find, and a score for each.</li>
+      <li><strong>Smaller pieces cost much less.</strong> Cutting the pages sent 9 to 18 times less text and still found 63% to 80% of the answers. For BILL, the full spec was too big to use. For Nutanix, the raw logs couldn't even be indexed. Cutting things down wasn't optional.</li>
+      <li><strong>Cutting along the document's own structure worked best.</strong> Splitting at section headings, with the heading on top of each piece, won with both kinds of search. Each piece is one complete idea with a name. That's the same idea as splitting BILL's spec one operation at a time. For logs, the next improvement I'd try is splitting at build stages or error blocks, with a label like "build 412 &gt; test stage &gt; error."</li>
+      <li><strong>Meaning search usually beat keyword search.</strong> People ask questions in different words than the documents use, and meaning search handles that well. Keyword search still matters for exact values like build numbers, error codes, or field names like <code>billCurrency</code>.</li>
+      <li><strong>Neither search was perfect, and they missed different questions.</strong> That's why combining them (hybrid search) works so well in practice, and it's what I'll test next.</li>
+      <li><strong>More pieces means more cost.</strong> The "small pieces" approach made 4,584 pieces, about four times more to embed and store. I saw the same thing at Nutanix: more segments meant more API calls and more rate-limit planning.</li>
+      <li><strong>Running a model during indexing is slow.</strong> Cutting by topic change was the slowest method, because it runs the embedding model on every sentence. It's the same lesson as BILL: LLM-free indexing was faster and more reliable than calling a model for every item.</li>
+      <li><strong>Testing is the most important part.</strong> Without the 30 questions, I would only be guessing which method was better. With EvalFrame, an LLM judge scores whole conversations. This project showed me that simple, mechanical checks ("is the answer actually in the result?") are a good partner to that.</li>
     </ul>
 
-    <div class="callout">
-      <div class="t">The idea, in one sentence</div>
-      <p>RAG is just giving the model the right page before you ask the question. Everything hard about it is logistics: <strong>cut the documents along their own structure, label every piece, search by meaning and by keyword together, and never change any of it without a test set to tell you whether you made things better or worse.</strong></p>
-    </div>
-
-    <h2>What I'd do differently now</h2>
+    <h2>What I'm taking away</h2>
     <ul>
       <li><strong>Split by structure, not just size:</strong> logs by stage, API specs by operation, docs by heading. Give every piece a label.</li>
-      <li><strong>Use keyword and meaning search together,</strong> not one or the other.</li>
+      <li><strong>Use keyword and meaning search together.</strong></li>
       <li><strong>Measure before and after any change,</strong> even with a small set of questions.</li>
-      <li><strong>Keep LLM calls out of indexing</strong> unless they're queued, retried, and time-limited.</li>
+      <li><strong>Keep LLM calls out of indexing,</strong> unless they're queued, retried, and time-limited.</li>
     </ul>
 
     <h2>What's next</h2>
-    <p>Next in this series I'll compare embedding models head to head, tour a few vector databases, and then combine keyword and meaning search with reranking. I'll write up each step with its numbers as I go.</p>
-    <p>If you've worked on any of this, I'd genuinely love to hear what has and hasn't worked for you.</p>
+    <p>Next in this series I'll compare embedding models, try a few vector databases, and then combine keyword and meaning search with reranking. I'll write about each step as I go.</p>
+    <p>Thank you for reading. If you've worked on any of this, I'd love to hear what has worked for you.</p>
   </article>
 
   <div class="pfoot">

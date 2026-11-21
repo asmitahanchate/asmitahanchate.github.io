@@ -34,10 +34,33 @@
 <header class="phead wrap">
   <div class="kicker">Writing</div>
   <h1>Learning in <em>public</em>, one pattern at a time.</h1>
-  <div class="dek">I write to understand. These are the notes I take while working through problems. Less "here's the solution," more "here's the shape underneath it that shows up again and again."</div>
+  <div class="dek">I write to understand. Two notebooks kept in parallel: the AI concepts I rebuild from scratch to really learn them, and the data-structure patterns underneath the problems I solve. Less "here's the solution," more "here's the shape that shows up again and again."</div>
 </header>
 
 <main class="wrap">
+  <section class="series">
+    <div class="series-label"><span class="no">Series</span><h2>AI Concepts</h2><span class="ln"></span></div>
+    <p class="intro">Rebuilding each layer of a production RAG system in Python, measuring it with a real eval set, then tying every result back to the applied-AI work I do day to day. Learn the concept, build it small, measure it, then ask how it scales.</p>
+
+    <a class="entry reveal" href="ai-concepts-01-rag-and-my-work.html">
+      <div class="day"><div class="d">No.</div><div class="n">01</div></div>
+      <div>
+        <h3>What RAG is, and where I'd already built it</h3>
+        <p>The textbook version of retrieval-augmented generation, next to three times I'd shipped it at work without the vocabulary (BILL, Nutanix, Camping World). Then a chunking lab on the FastAPI docs: five ways to cut a corpus, scored on recall and context size.</p>
+        <div class="tags"><span>RAG</span><span>Chunking</span><span>Retrieval Eval</span><span class="meta">· 9 min read · Nov 20, 2026</span></div>
+      </div>
+    </a>
+
+    <div class="entry soon">
+      <div class="day"><div class="d">No.</div><div class="n">02</div></div>
+      <div>
+        <h3>Embedding shoot-out <span class="badge">coming soon</span></h3>
+        <p>Putting a handful of embedding models through the same eval set: which one actually finds the right passage, how much it costs to run, and whether the biggest model is ever worth it.</p>
+        <div class="tags"><span>Embeddings</span><span>Dense Retrieval</span></div>
+      </div>
+    </div>
+  </section>
+
   <section class="series">
     <div class="series-label"><span class="no">Series</span><h2>Data Structures</h2><span class="ln"></span></div>
     <p class="intro">A daily run through <a href="https://github.com/asmitahanchate/neetcode150" target="_blank" rel="noopener" style="color:var(--accentink);border-bottom:1.5px solid var(--accent)">NeetCode 150</a>. Each day, I take what I actually learned and write down the pattern behind it, so the next unfamiliar problem feels familiar.</p>

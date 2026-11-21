@@ -100,6 +100,18 @@ pre .n{color:#c9a3e0}                          /* number */
 .cx{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 24px}
 .cx span{font-family:var(--mono);font-size:12.5px;color:var(--accentink);background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:4px 12px}
 
+/* Data tables (AI Concepts posts) */
+.tbl{margin:0 0 26px;overflow-x:auto;border:1px solid var(--line);border-radius:10px;-webkit-overflow-scrolling:touch}
+.tbl table{border-collapse:collapse;width:100%;font-size:14px;min-width:540px}
+.tbl thead th{background:var(--bg2);font-weight:600;color:var(--ink);text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);font-size:12.5px;letter-spacing:.015em;white-space:nowrap}
+.tbl tbody td{padding:10px 14px;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tbl td.num,.tbl th.num{text-align:right;font-family:var(--mono);font-size:13px;white-space:nowrap}
+.tbl tbody tr.best td{background:rgba(191,79,46,.055);color:var(--ink)}
+.tbl tbody tr.best td strong{color:var(--accentink);font-weight:600}
+.tcap{font-size:13px;color:var(--faint);margin:-14px 0 24px}
+@media(max-width:560px){.tbl table{font-size:13px}.tbl thead th,.tbl tbody td{padding:9px 11px}}
+
 /* Callout / takeaway box */
 .callout{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:22px 26px;margin:0 0 28px}
 .callout .t{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--accent);margin-bottom:8px}

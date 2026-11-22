@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prefix Sums: compute once, answer instantly · Asmita Hanchate</title>
+<meta name="description" content="Day 4 of my Data Structures series. A prefix sum is a running total you compute once so any range becomes a single subtraction. Range Sum Query, Find Pivot Index, Product of Array Except Self, and Subarray Sum Equals K." />
+<meta name="author" content="Asmita Hanchate" />
+<meta name="theme-color" content="#fbf7f0" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23bf4f2e'/%3E%3Ctext x='50' y='70' font-family='Georgia,serif' font-size='62' fill='%23fbf7f0' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Prefix Sums: compute once, answer instantly" />
+<meta property="og:description" content="Day 4 of my Data Structures series: a running total you compute once so any range becomes a single subtraction." />
+<meta property="og:url" content="https://asmitahanchate.github.io/blog/data-structures-04-prefix-sums.html" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Prefix Sums: compute once, answer instantly" />
+<meta name="twitter:description" content="Day 4 of my Data Structures series: a running total you compute once so any range becomes a single subtraction." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="blog.css" />
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="../" class="name">Asmita Hanchate</a>
+    <div class="links">
+      <a href="../#work">Work</a>
+      <a href="../#projects">Projects</a>
+      <a href="./" class="here">Writing</a>
+      <a href="../resume.pdf" target="_blank">Résumé</a>
+    </div>
+  </div>
+</nav>
+
+<div class="post wrap">
+
+  <header class="posthead">
+    <div class="crumb"><a href="./">Writing</a> &nbsp;/&nbsp; Data Structures</div>
+    <div class="kicker">Data Structures · Day 04</div>
+    <h1>Prefix Sums: <em>compute once, answer instantly</em></h1>
+    <div class="byline">
+      <b>Asmita Hanchate</b><span class="sep">·</span>
+      <span>Nov 21, 2026</span><span class="sep">·</span>
+      <span>7 min read</span><span class="sep">·</span>
+      <span>Prefix Sums</span>
+    </div>
+  </header>
+
+  <article>
+    <p class="lede">The sliding window on Day 3 kept a running total as it moved, adding what entered and dropping what left. Prefix sums are the calmer cousin of that idea. Instead of sliding one window, you walk the array once and write down the running total at every position. After that, the sum of any range at all is a single subtraction. You pay O(n) once, up front, so that every question you ask afterwards costs O(1).</p>
+
+    <p>Here's the one equation the whole pattern rests on. Let <code>prefix[i]</code> be the sum of <code>nums[0]</code> through <code>nums[i]</code>. Then the sum of the range from <code>left</code> to <code>right</code> is:</p>
+<pre><code>sum(left..right) = prefix[right] - prefix[left - 1]</code></pre>
+    <p>Everything up to <code>right</code>, minus everything before <code>left</code>, leaves exactly the middle. A range becomes a subtraction. Once you see a problem asking about sums over ranges, this is the tool to reach for.</p>
+
+    <h2><span class="pn">01</span>Range Sum Query, Immutable</h2>
+    <p class="lc">LeetCode 303 · the pattern in its purest form</p>
+    <p>You get an array and then many queries, each asking for the sum between two indices. Summing the range fresh each time is O(n) per query. The word <em>immutable</em> in the title is the hint: the array never changes, so you can precompute every running total once in the constructor and then answer each query by subtraction.</p>
+<pre><code><span class="k">class</span> <span class="f">NumArray</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, nums: List[<span class="f">int</span>]):
+        self.prefix = []
+        total = <span class="n">0</span>
+        <span class="k">for</span> n <span class="k">in</span> nums:
+            total += n
+            self.prefix.append(total)        <span class="c"># prefix[i] = sum of nums[0..i]</span>
+
+    <span class="k">def</span> <span class="f">sumRange</span>(self, left: <span class="f">int</span>, right: <span class="f">int</span>) <span class="k">-></span> <span class="f">int</span>:
+        preRight = self.prefix[right]
+        preLeft = self.prefix[left-<span class="n">1</span>] <span class="k">if</span> left > <span class="n">0</span> <span class="k">else</span> <span class="n">0</span>   <span class="c"># nothing before index 0</span>
+        <span class="k">return</span> preRight - preLeft</code></pre>
+    <div class="cx"><span>Build O(n)</span><span>Query O(1)</span><span>Space O(n)</span></div>
+    <p>The only edge case is <code>left == 0</code>, where there's no <code>prefix[left - 1]</code> to subtract, so the "before" sum is just zero. This split, a one-time build and then cheap repeated queries, is the shape to recognise: it's the same bargain as caching, pay once to read many times.</p>
+
+    <h2><span class="pn">02</span>Find Pivot Index</h2>
+    <p class="lc">LeetCode 724 · prefix meets postfix</p>
+    <p>Find the index where the sum of everything to its left equals the sum of everything to its right. Build the running total from the left (<code>prefix</code>) and from the right (<code>postfix</code>). Because both include <code>nums[i]</code> itself, the pivot is simply where they match.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">pivotIndex</span>(self, nums: List[<span class="f">int</span>]) <span class="k">-></span> <span class="f">int</span>:
+        prefix, postfix, total = [], [], <span class="n">0</span>
+        <span class="k">for</span> i <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(nums)):
+            total += nums[i]
+            prefix.append(total)
+        total = <span class="n">0</span>
+        <span class="k">for</span> i <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(nums)-<span class="n">1</span>, -<span class="n">1</span>, -<span class="n">1</span>):   <span class="c"># build the right-side total backwards</span>
+            total += nums[i]
+            postfix.append(total)
+        postfix.reverse()
+        <span class="k">for</span> i <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(nums)):
+            <span class="k">if</span> prefix[i] == postfix[i]:
+                <span class="k">return</span> i
+        <span class="k">return</span> -<span class="n">1</span></code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(n)</span></div>
+    <p>There's a leaner version that drops the second array entirely: keep the whole <code>total</code>, walk left to right with a <code>running_sum</code>, and at each index compare the left part to what's left over. That one is O(1) space. Worth knowing both, because the two-array version is the one you can read at a glance, and the single-pass version is the one you reach for when memory is tight.</p>
+<pre><code>        <span class="c"># O(1) space version</span>
+        total = <span class="f">sum</span>(nums)
+        running_sum = <span class="n">0</span>
+        <span class="k">for</span> i <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(nums)):
+            running_sum += nums[i]
+            <span class="k">if</span> running_sum == total:          <span class="c"># left+self == right+self</span>
+                <span class="k">return</span> i
+            total -= nums[i]
+        <span class="k">return</span> -<span class="n">1</span></code></pre>
+
+    <h2><span class="pn">03</span>Product of Array Except Self</h2>
+    <p class="lc">LeetCode 238 · the same skeleton, with products</p>
+    <p>Return an array where each slot holds the product of every number <em>except</em> the one at that slot, and you're not allowed to divide. The prefix idea transfers straight across: <code>prefix[i]</code> is the product of everything to the left of <code>i</code>, <code>postfix[i]</code> the product of everything to the right, and the answer is the two multiplied. The optimized version skips the extra arrays by writing the left products straight into the result, then walking back through with the right products.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">productExceptSelf</span>(self, nums: List[<span class="f">int</span>]) <span class="k">-></span> List[<span class="f">int</span>]:
+        result = [<span class="n">1</span>] * <span class="f">len</span>(nums)
+        pre = <span class="n">1</span>
+        <span class="k">for</span> i <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(nums)):      <span class="c"># left pass: product of everything before i</span>
+            result[i] = pre
+            pre *= nums[i]
+        post = <span class="n">1</span>
+        <span class="k">for</span> i <span class="k">in</span> <span class="f">range</span>(<span class="f">len</span>(nums)-<span class="n">1</span>, -<span class="n">1</span>, -<span class="n">1</span>):   <span class="c"># right pass: multiply the right product in</span>
+            result[i] *= post
+            post *= nums[i]
+        <span class="k">return</span> result</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1) extra · result doesn't count</span></div>
+    <p>I like this one because it shows the prefix idea isn't really about addition. It's about carrying a running aggregate so that each position already knows everything around it. Swap the sum for a product and the whole scaffold still stands. Two passes, no division, no extra memory beyond the answer.</p>
+
+    <h2><span class="pn">04</span>Subarray Sum Equals K</h2>
+    <p class="lc">LeetCode 560 · prefix sums meet the hash map</p>
+    <p>Count how many contiguous subarrays add up to <code>k</code>. This is the one that made the whole pattern click, because it's really Day 1's Two Sum wearing a disguise. A subarray from <code>i+1</code> to <code>j</code> sums to <code>k</code> exactly when <code>prefix[j] - prefix[i] == k</code>, which rearranges to <code>prefix[i] == currSum - k</code>. So as I walk the array keeping a running sum, I ask the same question as Two Sum: have I already seen the running sum I'd need? A hash map of running-sum counts answers it instantly.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">subarraySum</span>(self, nums: List[<span class="f">int</span>], k: <span class="f">int</span>) <span class="k">-></span> <span class="f">int</span>:
+        res, currSum = <span class="n">0</span>, <span class="n">0</span>
+        prefixSums = {<span class="n">0</span>: <span class="n">1</span>}                    <span class="c"># sum 0 seen once: the empty prefix</span>
+        <span class="k">for</span> n <span class="k">in</span> nums:
+            currSum += n
+            diff = currSum - k                 <span class="c"># the earlier prefix I'd need</span>
+            res += prefixSums.get(diff, <span class="n">0</span>)       <span class="c"># how many times I've seen it</span>
+            prefixSums[currSum] = <span class="n">1</span> + prefixSums.get(currSum, <span class="n">0</span>)
+        <span class="k">return</span> res</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(n)</span></div>
+    <p>The <code>{0: 1}</code> base case matters: a running sum of zero has "happened once" before the array even starts, which is what lets a subarray beginning at index 0 get counted. And here's the part I want to remember most: <strong>why this can't be a sliding window.</strong> The numbers can be negative or zero, so a running sum getting "too big" doesn't mean shrinking from the left will help, and a window can only track one subarray ending at each index, not count several. When negatives are in play, the window breaks and prefix-sum-plus-hashmap is the move. (This is one I've flagged to come back and re-solve from scratch, because the rearrangement is the kind of thing that's obvious while reading and slippery a week later.)</p>
+
+    <div class="callout">
+      <div class="t">The pattern, in one sentence</div>
+      <p>When a problem asks about sums (or products) over ranges of an array, precompute running totals so every range turns into one subtraction. <strong>Fixed queries on an unchanging array</strong> want a prefix array built once. <strong>Left equals right</strong> wants prefix against postfix. <strong>Counting subarrays that hit a target</strong> wants prefix sums plus a hash map, which is Two Sum all over again.</p>
+    </div>
+
+    <h2>Why I'm writing this one down</h2>
+    <p>Four days in, the same instinct keeps returning in new costumes: don't redo work you've already done. Day 1 remembered values in a hash map. Day 3 carried a window's total as it slid. Today precomputes every running total so a range costs one subtraction. The prettiest moment was the last problem folding all the way back to the first: once the data is the running sum instead of the raw values, "find a subarray that sums to k" and "find two numbers that add to target" are the exact same question, answered by the exact same hash map.</p>
+    <p><strong>Next up (Day 5):</strong> linked lists, where the data stops sitting in a neat indexable row and starts living in nodes that only know who comes next, so the whole game becomes pointer-wrangling: reversing a list, and merging two sorted ones.</p>
+  </article>
+
+  <div class="pfoot">
+    <a href="./">← All Data Structures posts</a>
+    <a href="https://github.com/asmitahanchate/neetcode150/tree/main/Prefix%20sums" target="_blank" rel="noopener">See the code on GitHub ↗</a>
+  </div>
+
+</div>
+
+<footer>
+  <div class="f-in wrap">
+    <div class="links">
+      <a href="../">Home</a>
+      <a href="mailto:asmita.hanchate0604@gmail.com">Email</a>
+      <a href="https://linkedin.com/in/asmitahanchate" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/asmitahanchate" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="fine">© 2026 Asmita Hanchate · Data Structures, day by day.</div>
+  </div>
+</footer>
+
+<script>
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

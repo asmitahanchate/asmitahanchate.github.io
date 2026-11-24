@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Linked Lists: a handful of moves that keep combining · Asmita Hanchate</title>
+<meta name="description" content="Day 5 of my Data Structures series. No index, no length, just a pointer to the next node. Reversing a list, merging two sorted ones, the fast and slow pointer, and how those few moves combine to solve Reorder List, Twin Sum, and Find the Duplicate Number." />
+<meta name="author" content="Asmita Hanchate" />
+<meta name="theme-color" content="#fbf7f0" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23bf4f2e'/%3E%3Ctext x='50' y='70' font-family='Georgia,serif' font-size='62' fill='%23fbf7f0' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Linked Lists: a handful of moves that keep combining" />
+<meta property="og:description" content="Day 5 of my Data Structures series: no index, no length, just a pointer to the next node, and a few moves that keep snapping together." />
+<meta property="og:url" content="https://asmitahanchate.github.io/blog/data-structures-05-linked-lists.html" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Linked Lists: a handful of moves that keep combining" />
+<meta name="twitter:description" content="Day 5 of my Data Structures series: no index, no length, just a pointer to the next node, and a few moves that keep snapping together." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="blog.css" />
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="../" class="name">Asmita Hanchate</a>
+    <div class="links">
+      <a href="../#work">Work</a>
+      <a href="../#projects">Projects</a>
+      <a href="./" class="here">Writing</a>
+      <a href="../resume.pdf" target="_blank">Résumé</a>
+    </div>
+  </div>
+</nav>
+
+<div class="post wrap">
+
+  <header class="posthead">
+    <div class="crumb"><a href="./">Writing</a> &nbsp;/&nbsp; Data Structures</div>
+    <div class="kicker">Data Structures · Day 05</div>
+    <h1>Linked Lists: <em>a handful of moves that keep combining</em></h1>
+    <div class="byline">
+      <b>Asmita Hanchate</b><span class="sep">·</span>
+      <span>Nov 23, 2026</span><span class="sep">·</span>
+      <span>9 min read</span><span class="sep">·</span>
+      <span>Linked Lists</span>
+    </div>
+  </header>
+
+  <article>
+    <p class="lede">For four days the data sat in a neat indexable row. I could ask for <code>nums[i]</code>, I knew the <code>len</code>, and I could jump anywhere I liked. A linked list takes all of that away. Each node knows one thing only: who comes next. No index, no length, no going backward. What you hold is a single pointer, and the whole game becomes moving pointers carefully enough that you never lose the rest of the list. What surprised me today is how few distinct moves that actually takes. Three small ones, and then the harder problems are just those three snapped together.</p>
+
+    <p>The nodes look like this the whole way through, so I'll stop repeating it:</p>
+<pre><code><span class="k">class</span> <span class="f">ListNode</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, val=<span class="n">0</span>, next=<span class="k">None</span>):
+        self.val = val
+        self.next = next       <span class="c"># the only way out of a node</span></code></pre>
+
+    <h2><span class="pn">01</span>Reverse a list</h2>
+    <p class="lc">LeetCode 206 · the move everything else borrows</p>
+    <p>Reversing is the first move, and it's the one I reuse the most, so it's worth slowing down on. The trap is obvious once you hit it: the moment you point a node's arrow backward, you've thrown away its link to the rest of the list. So before flipping anything, you save where you were going. Three pointers do it, in this order every time: remember next, flip, then shuffle both pointers forward.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">reverseList</span>(self, head: Optional[<span class="f">ListNode</span>]) <span class="k">-></span> Optional[<span class="f">ListNode</span>]:
+        prev, curr = <span class="k">None</span>, head
+        <span class="k">while</span> curr:
+            temp = curr.next      <span class="c"># 1. remember the rest of the list</span>
+            curr.next = prev      <span class="c"># 2. flip this node's arrow backward</span>
+            prev = curr           <span class="c"># 3. prev catches up</span>
+            curr = temp           <span class="c"># 4. curr moves on</span>
+        <span class="k">return</span> prev               <span class="c"># the old tail is the new head</span></code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span></div>
+    <p>When the loop ends, <code>curr</code> has run off the end and <code>prev</code> is sitting on what used to be the last node, which is now the front. That one detail, <strong>prev ends up as the new head</strong>, is the thing to hold onto, because every problem below reverses something and then reaches for <code>prev</code>.</p>
+
+    <h2><span class="pn">02</span>Merge two sorted lists</h2>
+    <p class="lc">LeetCode 21 · the dummy node</p>
+    <p>Given two sorted lists, stitch them into one sorted list. The logic is easy, pick the smaller head and advance that list, but there's an annoying wrinkle: the very first node is a special case, because the result doesn't have a head yet. The fix is a trick I now reach for by reflex. Start with a throwaway <code>dummy</code> node so the list always has a fixed handle to build from, and return <code>dummy.next</code> at the end.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">mergeTwoLists</span>(self, list1, list2) <span class="k">-></span> Optional[<span class="f">ListNode</span>]:
+        dummy = node = <span class="f">ListNode</span>()        <span class="c"># a fixed handle on the merged list</span>
+        <span class="k">while</span> list1 <span class="k">and</span> list2:
+            <span class="k">if</span> list1.val &lt; list2.val:
+                node.next = list1
+                list1 = list1.next
+            <span class="k">else</span>:
+                node.next = list2
+                list2 = list2.next
+            node = node.next
+        node.next = list1 <span class="k">or</span> list2       <span class="c"># attach whatever's left, in one line</span>
+        <span class="k">return</span> dummy.next                <span class="c"># skip the dummy, hand back the real head</span></code></pre>
+    <div class="cx"><span>Time O(m + n)</span><span>Space O(1) · reuses the nodes</span></div>
+    <p>Two small things I want to keep. <code>node.next = list1 or list2</code> leans on Python returning the first truthy value, so when one list empties, the whole remaining tail gets attached at once (it's already sorted, no need to walk it). And nothing is copied: the merged list is the <em>same nodes</em>, just re-pointed. That reuse is the quiet theme of the whole day.</p>
+
+    <h2><span class="pn">03</span>Two speeds: the fast and slow pointer</h2>
+    <p class="lc">LeetCode 876 and 141 · one trick, two questions</p>
+    <p>Here's the move that unlocks the second half of the list. Run two pointers at once: <code>slow</code> takes one step, <code>fast</code> takes two. By the time <code>fast</code> falls off the end, <code>slow</code> has only gone halfway, so it's sitting on the middle. That's the entire idea behind finding the middle in a single pass, without ever knowing the length.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">middleNode</span>(self, head) <span class="k">-></span> Optional[<span class="f">ListNode</span>]:
+        slow = fast = head
+        <span class="k">while</span> fast <span class="k">and</span> fast.next:
+            slow = slow.next
+            fast = fast.next.next      <span class="c"># twice the pace</span>
+        <span class="k">return</span> slow                    <span class="c"># fast hit the end, so slow is the middle</span></code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span></div>
+    <p>Now the same two speeds answer a completely different question: <em>does this list loop back on itself?</em> If there's no cycle, <code>fast</code> runs off the end like before. But if there is a cycle, <code>fast</code> can't escape, it keeps lapping the loop, and because it gains exactly one step on <code>slow</code> every iteration, it has to eventually land on the same node. The pointers meeting <em>is</em> the proof of a cycle. This is Floyd's algorithm, and it costs no extra memory, where the obvious "keep a set of visited nodes" approach costs O(n).</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">hasCycle</span>(self, head) <span class="k">-></span> <span class="f">bool</span>:
+        slow = fast = head
+        <span class="k">while</span> fast <span class="k">and</span> fast.next:
+            slow = slow.next
+            fast = fast.next.next
+            <span class="k">if</span> slow == fast:          <span class="c"># they met, so fast is lapping a loop</span>
+                <span class="k">return</span> <span class="k">True</span>
+        <span class="k">return</span> <span class="k">False</span>                    <span class="c"># fast reached the end, no loop</span></code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span></div>
+    <p>Same six lines, swap "return slow" for "did they collide," and one tool reads the middle or detects a loop. That reuse is exactly the pattern I keep betting on.</p>
+
+    <h2><span class="pn">04</span>When the moves combine: Twin Sum, then Reorder</h2>
+    <p class="lc">LeetCode 2130 and 143 · find the middle, reverse, then walk together</p>
+    <p>This is where the day paid off. <strong>Maximum Twin Sum</strong> pairs the first node with the last, the second with the second-last, and so on, and asks for the largest pair sum. The easy version copies the values into an array and runs two pointers from both ends, which is Day 2 all over again but costs O(n) space. The version I'm prouder of does it in O(1) by combining two moves from above: use the fast and slow pointer to reach the middle, <em>and reverse the first half while you're walking there</em>. When <code>fast</code> hits the end, <code>prev</code> is the reversed first half and <code>slow</code> is the second half, both facing the middle, so walking them forward together pairs each node with its twin.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">pairSum</span>(self, head) <span class="k">-></span> <span class="f">int</span>:
+        slow, fast = head, head
+        prev = <span class="k">None</span>
+        <span class="k">while</span> fast <span class="k">and</span> fast.next:      <span class="c"># find the middle AND reverse the first half</span>
+            fast = fast.next.next
+            temp = slow.next
+            slow.next = prev
+            prev = slow
+            slow = temp
+        res = <span class="n">0</span>
+        <span class="k">while</span> slow:                    <span class="c"># prev walks the reversed front, slow the back</span>
+            res = <span class="f">max</span>(res, prev.val + slow.val)
+            prev = prev.next
+            slow = slow.next
+        <span class="k">return</span> res</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span></div>
+    <p><strong>Reorder List</strong> is the fuller version of the same idea, and it's the problem that made the whole day click into place. It wants the list laced together as first, last, second, second-last, and so on, done in place. That's three moves in sequence, each one already written above: find the middle, reverse the second half, then weave the two halves together one node at a time.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">reorderList</span>(self, head) <span class="k">-></span> <span class="k">None</span>:
+        slow, fast = head, head
+        <span class="k">while</span> fast <span class="k">and</span> fast.next:          <span class="c"># 1. find the middle (move 03)</span>
+            slow = slow.next
+            fast = fast.next.next
+
+        second = slow.next                     <span class="c"># 2. cut, then reverse the back half (move 01)</span>
+        prev = slow.next = <span class="k">None</span>
+        <span class="k">while</span> second:
+            temp = second.next
+            second.next = prev
+            prev = second
+            second = temp
+
+        first, second = head, prev             <span class="c"># 3. weave front and reversed-back together</span>
+        <span class="k">while</span> second:
+            tmp1, tmp2 = first.next, second.next
+            first.next = second
+            second.next = tmp1
+            first, second = tmp1, tmp2</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span></div>
+    <p>An honest note, because I keep one of these every day. My first pass at Reorder List didn't actually reorder anything. I copied the values into an array, built the interleaved order in a second array, and <code>print</code>ed it, which looks right in the console and is completely wrong: the problem asks you to rewire the real nodes in place, and my version also quietly dropped the middle value on odd-length lists. I kept that first attempt in the file next to the real one. Seeing them side by side is the clearest reminder that with linked lists, producing the right <em>values</em> is not the same as moving the right <em>pointers</em>.</p>
+
+    <h2><span class="pn">05</span>The same trick, off the list entirely</h2>
+    <p class="lc">LeetCode 287 · Find the Duplicate Number</p>
+    <p>The one that genuinely made me grin. You're handed an array of <code>n + 1</code> numbers, each between <code>1</code> and <code>n</code>, and there's exactly one duplicate. Find it without sorting, without a hash set, and without modifying the array. All three easy doors are locked. The unlock is to stop seeing an array and see a linked list hiding inside it: read each value as a pointer, <code>i</code> leads to <code>nums[i]</code>. Because two different indexes hold the same value, two arrows point at the same place, which is exactly a cycle, and the node where the loop begins is the duplicate.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">findDuplicate</span>(self, nums: List[<span class="f">int</span>]) <span class="k">-></span> <span class="f">int</span>:
+        slow = fast = <span class="n">0</span>
+        <span class="k">while</span> <span class="k">True</span>:                   <span class="c"># phase 1: two speeds, until they meet in the loop</span>
+            slow = nums[slow]
+            fast = nums[nums[fast]]
+            <span class="k">if</span> slow == fast:
+                <span class="k">break</span>
+        slow2 = <span class="n">0</span>                      <span class="c"># phase 2: from the start and the meeting point,</span>
+        <span class="k">while</span> <span class="k">True</span>:                   <span class="c"># step together; they meet at the loop's entrance</span>
+            slow = nums[slow]
+            slow2 = nums[slow2]
+            <span class="k">if</span> slow == slow2:
+                <span class="k">return</span> slow</code></pre>
+    <div class="cx"><span>Time O(n)</span><span>Space O(1)</span><span>nums untouched</span></div>
+    <p>Phase one is the cycle detection from move 03. Phase two is the piece of Floyd's I hadn't needed before: once the two pointers have met somewhere inside the loop, restarting one pointer from the very beginning and stepping both at the same pace lands them together precisely at the entrance to the loop, and that entrance is the repeated value. I'm not going to pretend the proof of phase two was obvious to me on sight, it wasn't, but the shape of it is worth memorizing even before the proof fully lands: <em>meet inside the loop, then walk one up from the start to find the door.</em></p>
+
+    <div class="callout">
+      <div class="t">The pattern, in one sentence</div>
+      <p>A linked list gives you one pointer and one direction, so learn a few pointer moves cold and let them combine. <strong>Reverse</strong> is save-next, flip, shuffle forward, and <code>prev</code> is your new head. <strong>Fast and slow</strong> finds the middle in one pass and detects a cycle with no extra memory. A <strong>dummy node</strong> kills the first-node special case. The hard problems (Reorder, Twin Sum, Find the Duplicate) aren't new tricks, they're those three in a row.</p>
+    </div>
+
+    <h2>Why I'm writing this one down</h2>
+    <p>Days 1 through 4 were all one quiet idea in different clothes: don't redo work you've already done. Day 5 is a different lesson, and it's the one I needed. The problems that looked hardest, reorder the list, pair the twins, find the duplicate, turned out to have no new ingredient in them at all. They were reverse, plus two speeds, plus a careful weave, stacked. The skill the day actually tested wasn't inventing anything. It was trusting that a move I already knew would still hold when I leaned a second and a third move on top of it. And the prettiest moment, again, was a callback: Find the Duplicate takes the cycle detection built for pointers and runs it on a plain array, which means the linked-list tool reached all the way back and solved an array problem from Week 1.</p>
+    <p><strong>Next up (Day 6):</strong> the data finally branches. Trees, where a node no longer points to one next, but to a left and a right, and "walk the whole thing" stops being a loop and starts being a question about order.</p>
+  </article>
+
+  <div class="pfoot">
+    <a href="./">← All Data Structures posts</a>
+    <a href="https://github.com/asmitahanchate/neetcode150/tree/main/Linked%20Lists" target="_blank" rel="noopener">See the code on GitHub ↗</a>
+  </div>
+
+</div>
+
+<footer>
+  <div class="f-in wrap">
+    <div class="links">
+      <a href="../">Home</a>
+      <a href="mailto:asmita.hanchate0604@gmail.com">Email</a>
+      <a href="https://linkedin.com/in/asmitahanchate" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/asmitahanchate" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="fine">© 2026 Asmita Hanchate · Data Structures, day by day.</div>
+  </div>
+</footer>
+
+<script>
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

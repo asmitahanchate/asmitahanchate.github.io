@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Binary Search: the real skill is which half you throw away · Asmita Hanchate</title>
+<meta name="description" content="Day 6 of my Data Structures series. Binary search past find-the-target: using it as a boundary finder (first and last position), searching for structure instead of a value (minimum in a rotated array), and the rotated-array search where one half is always sorted." />
+<meta name="author" content="Asmita Hanchate" />
+<meta name="theme-color" content="#fbf7f0" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23bf4f2e'/%3E%3Ctext x='50' y='70' font-family='Georgia,serif' font-size='62' fill='%23fbf7f0' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="Binary Search: the real skill is which half you throw away" />
+<meta property="og:description" content="Day 6 of my Data Structures series: binary search past find-the-target, where the work is proving which half can't hold the answer." />
+<meta property="og:url" content="https://asmitahanchate.github.io/blog/data-structures-06-binary-search.html" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Binary Search: the real skill is which half you throw away" />
+<meta name="twitter:description" content="Day 6 of my Data Structures series: binary search past find-the-target, where the work is proving which half can't hold the answer." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="blog.css" />
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="../" class="name">Asmita Hanchate</a>
+    <div class="links">
+      <a href="../#work">Work</a>
+      <a href="../#projects">Projects</a>
+      <a href="./" class="here">Writing</a>
+      <a href="../resume.pdf" target="_blank">Résumé</a>
+    </div>
+  </div>
+</nav>
+
+<div class="post wrap">
+
+  <header class="posthead">
+    <div class="crumb"><a href="./">Writing</a> &nbsp;/&nbsp; Data Structures</div>
+    <div class="kicker">Data Structures · Day 06</div>
+    <h1>Binary Search: <em>the real skill is which half you throw away</em></h1>
+    <div class="byline">
+      <b>Asmita Hanchate</b><span class="sep">·</span>
+      <span>Nov 24, 2026</span><span class="sep">·</span>
+      <span>8 min read</span><span class="sep">·</span>
+      <span>Binary Search</span>
+    </div>
+  </header>
+
+  <article>
+    <p class="lede">Everybody learns binary search the same friendly way: the array is sorted, look at the middle, go left if your target is smaller and right if it's bigger. That version is easy, and it's also the least interesting thing binary search can do. The three problems I did today all skip the friendly case. None of them is a plain "is it here." The thread running through them is the part nobody emphasises when they teach the easy version: every step, you delete half the array, and the entire difficulty is <em>proving</em> that the half you're deleting cannot possibly contain the answer. Get that proof wrong and you either skip past the answer or loop forever.</p>
+
+    <p>This is the same move Day 2 was built on. Two pointers worked because, on sorted input, I could prove which pointer to move so I never stepped over the answer. Binary search is that idea with the volume turned up: sorted input lets me prove which <strong>half</strong> to throw away, so I never read it at all. That's where the O(log n) comes from. The skill isn't the loop, it's the argument inside the <code>if</code>.</p>
+
+    <h2><span class="pn">01</span>Find First and Last Position</h2>
+    <p class="lc">LeetCode 34 · binary search as a boundary finder</p>
+    <p>The array is sorted and the target can repeat, and I need the first and last index where it appears, in O(log n). The honest thing to admit first: plain binary search finds <em>a</em> match, not the leftmost or rightmost one, because the moment it lands on the value it stops. The fix reframes what binary search is for. Don't stop on a match. On a match, record it and <em>keep searching the side you still care about</em>. One pass can only lean one way, so I run it twice: once leaning left for the first occurrence, once leaning right for the last.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">searchRange</span>(self, nums: List[<span class="f">int</span>], target: <span class="f">int</span>) <span class="k">-></span> List[<span class="f">int</span>]:
+        first, last = <span class="f">float</span>(<span class="s">"inf"</span>), <span class="f">float</span>(<span class="s">"-inf"</span>)
+
+        left, right = <span class="n">0</span>, <span class="f">len</span>(nums) - <span class="n">1</span>        <span class="c"># pass 1: find the FIRST match</span>
+        <span class="k">while</span> left &lt;= right:
+            mid = (left + right) // <span class="n">2</span>
+            <span class="k">if</span> nums[mid] &lt; target:
+                left = mid + <span class="n">1</span>
+            <span class="k">elif</span> nums[mid] > target:
+                right = mid - <span class="n">1</span>
+            <span class="k">else</span>:
+                first = <span class="f">min</span>(first, mid)
+                right = mid - <span class="n">1</span>               <span class="c"># a match, but keep going left</span>
+
+        left, right = <span class="n">0</span>, <span class="f">len</span>(nums) - <span class="n">1</span>        <span class="c"># pass 2: find the LAST match</span>
+        <span class="k">while</span> left &lt;= right:
+            mid = (left + right) // <span class="n">2</span>
+            <span class="k">if</span> nums[mid] &lt; target:
+                left = mid + <span class="n">1</span>
+            <span class="k">elif</span> nums[mid] > target:
+                right = mid - <span class="n">1</span>
+            <span class="k">else</span>:
+                last = <span class="f">max</span>(last, mid)
+                left = mid + <span class="n">1</span>                <span class="c"># a match, but keep going right</span>
+
+        <span class="k">return</span> [first, last] <span class="k">if</span> first != <span class="f">float</span>(<span class="s">"inf"</span>) <span class="k">else</span> [-<span class="n">1</span>, -<span class="n">1</span>]</code></pre>
+    <div class="cx"><span>Time O(log n)</span><span>Space O(1)</span></div>
+    <p>Two details I had to be careful with. The "did we ever find it" check has to be <code>first != inf</code>, not <code>first > 0</code>, because index <code>0</code> is a perfectly valid first position and <code>first > 0</code> would throw it away. And the takeaway that outlasts this one problem: binary search doesn't only answer "is the target here," it can hunt for a <em>boundary</em>, the edge where a condition flips from false to true. Keep searching past the match, toward the edge you want.</p>
+
+    <h2><span class="pn">02</span>Find Minimum in a Rotated Sorted Array</h2>
+    <p class="lc">LeetCode 153 · searching for structure, not a value</p>
+    <p>A sorted array was rotated at some unknown point, so <code>[1,2,3,4,5]</code> might now be <code>[3,4,5,1,2]</code>, and I need the minimum in O(log n). There's no <code>target</code> here at all, which is the whole mental shift: I'm not searching for a value I was handed, I'm searching for a <em>structural feature</em>. The minimum is the one element that broke the ascending order, the single number smaller than both of its neighbours. When I'm not standing on it, I steer toward the half that goes downhill, because the drop is where the minimum lives.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">findMin</span>(self, nums: List[<span class="f">int</span>]) <span class="k">-></span> <span class="f">int</span>:
+        left, right = <span class="n">0</span>, <span class="f">len</span>(nums) - <span class="n">1</span>
+        n = <span class="f">len</span>(nums)
+        <span class="k">while</span> left &lt;= right:
+            mid = (left + right) // <span class="n">2</span>
+            prev, nxt = (mid - <span class="n">1</span>) % n, (mid + <span class="n">1</span>) % n
+            <span class="k">if</span> nums[mid] &lt; nums[prev] <span class="k">and</span> nums[mid] &lt; nums[nxt]:
+                <span class="k">return</span> nums[mid]               <span class="c"># smaller than both neighbours = the min</span>
+            <span class="k">elif</span> nums[left] > nums[mid]:
+                right = mid - <span class="n">1</span>               <span class="c"># the drop is on the left</span>
+            <span class="k">elif</span> nums[right] &lt; nums[mid]:
+                left = mid + <span class="n">1</span>                <span class="c"># the drop is on the right</span>
+            <span class="k">else</span>:
+                right = mid - <span class="n">1</span>               <span class="c"># no drop in view: already sorted, min is at the start</span>
+        <span class="k">return</span> nums[<span class="n">0</span>]                      <span class="c"># 1-element array never enters a comparison</span></code></pre>
+    <div class="cx"><span>Time O(log n)</span><span>Space O(1)</span></div>
+    <p>My honest note for the day lives in that last <code>else</code>. My first version only had the two "which side is unsorted" branches, and on an array that was already sorted (or a sub-window with no drop left in it) neither branch fired cleanly, the pointers stopped moving, and it timed out, an infinite loop dressed up as a wrong answer. Adding the <code>else: right = mid - 1</code> is the fix: when no descent is visible, everything in view is ascending, so the smallest thing is at the left end and shrinking the window from the right is always safe. A binary search that can reach a state where it moves <em>neither</em> pointer is not slow, it's broken. Every branch has to make the window strictly smaller.</p>
+
+    <h2><span class="pn">03</span>Search in a Rotated Sorted Array</h2>
+    <p class="lc">LeetCode 33 · the one where half the array is always sorted</p>
+    <p>Now put the two ideas together: the array is rotated like the last one, but this time I'm back to looking for an actual <code>target</code>, still in O(log n). The key observation is quietly beautiful. No matter where the rotation happened, when you split at <code>mid</code>, at least one of the two halves is fully sorted. So at each step I figure out which half is the clean, sorted one, check whether the target falls inside its tidy range, and from that alone I know which half to drop.</p>
+<pre><code><span class="k">class</span> <span class="f">Solution</span>:
+    <span class="k">def</span> <span class="f">search</span>(self, nums: List[<span class="f">int</span>], target: <span class="f">int</span>) <span class="k">-></span> <span class="f">int</span>:
+        start, end = <span class="n">0</span>, <span class="f">len</span>(nums) - <span class="n">1</span>
+        <span class="k">while</span> start &lt;= end:
+            mid = (start + end) // <span class="n">2</span>
+            <span class="k">if</span> nums[mid] == target:
+                <span class="k">return</span> mid
+            <span class="k">if</span> nums[mid] >= nums[start]:          <span class="c"># left half (start..mid) is sorted</span>
+                <span class="k">if</span> target > nums[mid] <span class="k">or</span> target &lt; nums[start]:
+                    start = mid + <span class="n">1</span>               <span class="c"># target is outside it, go right</span>
+                <span class="k">else</span>:
+                    end = mid - <span class="n">1</span>
+            <span class="k">else</span>:                                 <span class="c"># right half (mid..end) is sorted</span>
+                <span class="k">if</span> target &lt; nums[mid] <span class="k">or</span> target > nums[end]:
+                    end = mid - <span class="n">1</span>                 <span class="c"># target is outside it, go left</span>
+                <span class="k">else</span>:
+                    start = mid + <span class="n">1</span>
+        <span class="k">return</span> -<span class="n">1</span></code></pre>
+    <div class="cx"><span>Time O(log n)</span><span>Space O(1)</span></div>
+    <p>The <code>>=</code> in <code>nums[mid] >= nums[start]</code> is load-bearing, not a style choice. When the window shrinks to one element, <code>start == mid</code>, and I want that lonely element to count as a sorted left half so the logic still has a branch to take. This is the pattern at full strength: I never ask "is the whole array sorted." I only ever ask about the <em>half I can prove is sorted</em>, decide the target's fate against that neat half, and throw the rest away.</p>
+
+    <div class="callout">
+      <div class="t">The pattern, in one sentence</div>
+      <p>Binary search is only secondarily about finding a value; it's about <strong>discarding half the search space with a provable reason</strong> each step. Make it a <strong>boundary finder</strong> by recording a match and continuing toward the edge. Point it at <strong>structure</strong> (a minimum, a pivot) instead of a target when there's no target to hand. On a <strong>rotated array</strong>, lean on the half you can prove is sorted. And guarantee every branch shrinks the window, or the loop never ends.</p>
+    </div>
+
+    <h2>Why I'm writing this one down</h2>
+    <p>For five days the recurring lesson was reuse: don't redo work you've already done. Binary search is the harsher sibling of that idea. It's not reuse, it's <em>refusal</em>: don't even look at work you can prove is pointless. Halving the array feels like the trick, but halving is the easy part. The real work, every single time, was the sentence justifying why the discarded half was safe to discard, and the bug that cost me was the one case where my justification quietly didn't cover the window anymore. Day 2 taught me to prove which pointer to move. Today was the same proof, with higher stakes, because here a wrong proof doesn't just miss the answer, it can spin forever.</p>
+    <p><strong>Next up (Day 7):</strong> trees, where the data finally branches. A node stops pointing to one next and starts pointing to a left and a right, and "walk the whole thing" stops being a loop and becomes a question about order.</p>
+  </article>
+
+  <div class="pfoot">
+    <a href="./">← All Data Structures posts</a>
+    <a href="https://github.com/asmitahanchate/neetcode150/tree/main/Binary%20Search" target="_blank" rel="noopener">See the code on GitHub ↗</a>
+  </div>
+
+</div>
+
+<footer>
+  <div class="f-in wrap">
+    <div class="links">
+      <a href="../">Home</a>
+      <a href="mailto:asmita.hanchate0604@gmail.com">Email</a>
+      <a href="https://linkedin.com/in/asmitahanchate" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/asmitahanchate" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="fine">© 2026 Asmita Hanchate · Data Structures, day by day.</div>
+  </div>
+</footer>
+
+<script>
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
